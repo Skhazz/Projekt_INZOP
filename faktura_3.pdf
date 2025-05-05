@@ -1,0 +1,25 @@
+
+            ==============================
+                    FAKTURA VAT
+            ==============================
+            Numer faktury: 3
+            Numer zamówienia: 3
+            Data: 2025-01-31 13:30:25
+
+            Klient: asa asa
+            Adres: a a a
+
+            ------------------------------
+            Produkty:
+            ------------------------------
+               Yamaha Pacifica 112 - 1 szt., Cena: 1234.0 zł
+
+            ------------------------------
+             Dostawa: kurier
+             Suma netto: 1234.0 zł
+             VAT 23%: 283.82 zł
+             Suma brutto: 1517.82 zł
+            ------------------------------
+
+            Dziękujemy za zakupy w naszym sklepie!
+            
