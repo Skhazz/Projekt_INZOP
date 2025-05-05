@@ -1,14 +1,8 @@
 from Models.zamowienia import Zamowienia
 
-def wyswietl_zamowienia_klienta():
-    """Wyświetla zamówienia danego klienta"""
-    klient_id = input("Podaj ID klienta: ").strip()
-
-    if not klient_id.isdigit():
-        print(" ID klienta musi być liczbą całkowitą!")
-        return
-
-    Zamowienia.wyswietl_zamowienia_klienta(int(klient_id))
+def wyswietl_zamowienia_klienta(konto_id):
+    """Wyświetla zamówienia danego klienta po ID konta"""
+    Zamowienia.wyswietl_zamowienia_klienta(konto_id)
 
 if __name__ == "__main__":
-    wyswietl_zamowienia_klienta()
+    print("Ten skrypt powinien być wywoływany z parametrem konto_id z panelu klienta.")

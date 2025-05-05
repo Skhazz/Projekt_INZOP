@@ -11,4 +11,4 @@ def anuluj_zamowienie():
     Zamowienia.anuluj_zamowienie(int(zamowienie_id))
 
 if __name__ == "__main__":
-    anuluj_zamowienie()
+    print("Ten skrypt można wywołać z menu klienta — użytkownik musi znać ID zamówienia do anulowania.")

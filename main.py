@@ -1,5 +1,6 @@
-import sys  #Patryk Sliwowski, Filip Sołowiej, Jacek Wargol
+import sys
 from database import initialize_database
+from Models.konta import Konto
 from Skrypty.dodaj_klienta import dodaj_klienta
 from Skrypty.wyswietl_baze import wyswietl_baze
 from Skrypty.usun_klienta import usun_klienta
@@ -15,13 +16,11 @@ from Skrypty.zloz_zamowienie import zloz_zamowienie
 from Skrypty.anuluj_zamowienie import anuluj_zamowienie
 from Skrypty.wyswietl_zamowienia import wyswietl_zamowienia_klienta
 from Skrypty.raport_sprzedazy import raport_sprzedazy
-
+from Skrypty.rejestracja import rejestracja
 
 initialize_database()
 
-
 def panel_administratora():
-    """Menu dla administratora"""
     opcje_admin = {
         "1": ("Raport Sprzedaży", raport_sprzedazy),
         "2": ("Dodaj klienta", dodaj_klienta),
@@ -44,33 +43,39 @@ def panel_administratora():
 
         if wybor in opcje_admin:
             opis, funkcja = opcje_admin[wybor]
-
-            if funkcja is None:  # Jeśli użytkownik wybrał powrót
+            if funkcja is None:
                 print(" Powrót do głównego menu.")
-                return  # Zamiast `break`, używamy `return`, żeby wrócić do głównego menu
+                return
 
             print(f"\n Wybrano: {opis} (wpisz 'anuluj', aby wrócić do menu)\n")
-
             potwierdzenie = input("Naciśnij Enter, aby kontynuować lub wpisz 'anuluj': ").strip().lower()
             if potwierdzenie == "anuluj":
                 print(" Powrót do menu administratora.")
                 continue
 
-            funkcja()  # Uruchamiamy wybraną funkcję
+            funkcja()
         else:
             print(" Nieprawidłowy wybór, spróbuj ponownie.")
 
 def panel_klienta():
-    """Menu dla klienta"""
+    print("\n*** Logowanie klienta ***")
+    login = input("Login: ").strip()
+    haslo = input("Hasło: ").strip()
+    konto_id = Konto.zaloguj(login, haslo)
+
+    if konto_id is None:
+        print(" Nie udało się zalogować.")
+        return
+
     opcje_klient = {
-        "1": ("Wyświetl produkty", wyswietl_produkty),
-        "2": ("Dodaj do koszyka", dodaj_do_koszyka),
-        "3": ("Wyświetl koszyk", wyswietl_koszyk),
-        "4": ("Usuń z koszyka", usun_z_koszyka),
-        "5": ("Złóż zamowienie", zloz_zamowienie),
-        "6": ("Wyświetl złożnone zamówienia", wyswietl_zamowienia_klienta),
+        "1": ("Wyświetl produkty", lambda: wyswietl_produkty()),
+        "2": ("Dodaj do koszyka", lambda: dodaj_do_koszyka(konto_id)),
+        "3": ("Wyświetl koszyk", lambda: wyswietl_koszyk(konto_id)),
+        "4": ("Usuń z koszyka", lambda: usun_z_koszyka(konto_id)),
+        "5": ("Złóż zamowienie", lambda: zloz_zamowienie(konto_id)),
+        "6": ("Wyświetl złożone zamówienia", lambda: wyswietl_zamowienia_klienta(konto_id)),
         "7": ("Anuluj zamówienie", anuluj_zamowienie),
-        "8": ("Powrót do głównego menu", None)
+        "8": ("Wyloguj się", None)
     }
 
     while True:
@@ -82,29 +87,22 @@ def panel_klienta():
 
         if wybor in opcje_klient:
             opis, funkcja = opcje_klient[wybor]
+            if funkcja is None:
+                print(" Wylogowano.")
+                return
 
-            if funkcja is None:  # Jeśli użytkownik wybrał powrót
-                print(" Powrót do głównego menu.")
-                return  # Wracamy do głównego menu
-
-            print(f"\n Wybrano: {opis} (wpisz 'anuluj', aby wrócić do menu)\n")
-
-            potwierdzenie = input("Naciśnij Enter, aby kontynuować lub wpisz 'anuluj': ").strip().lower()
-            if potwierdzenie == "anuluj":
-                print(" Powrót do menu klienta.")
-                continue
-
-            funkcja()  # Uruchamiamy wybraną funkcję
+            print(f"\n Wybrano: {opis}\n")
+            funkcja()
         else:
             print(" Nieprawidłowy wybór, spróbuj ponownie.")
 
 def menu_glowne():
-    """Główne menu wyboru panelu"""
     opcje_glowne = {
         "1": ("Panel administratora", panel_administratora),
         "2": ("Panel klienta", panel_klienta),
-        "3": ("Wyjdź do terminala", exit),
-        "4": ("Wyłącz program", lambda: sys.exit("Program zamknięty."))
+        "3": ("Zarejestruj się", rejestracja),
+        "4": ("Wyjdź do terminala", exit),
+        "5": ("Wyłącz program", lambda: sys.exit("Program zamknięty."))
     }
 
     while True:
@@ -116,11 +114,10 @@ def menu_glowne():
 
         if wybor in opcje_glowne:
             opis, funkcja = opcje_glowne[wybor]
-            if funkcja is not None:  # Sprawdzamy, czy funkcja istnieje
+            if funkcja is not None:
                 funkcja()
         else:
             print(" Nieprawidłowy wybór, spróbuj ponownie.")
-
 
 if __name__ == "__main__":
     menu_glowne()

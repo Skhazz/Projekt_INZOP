@@ -22,7 +22,15 @@ def initialize_database():
         adres TEXT NOT NULL
     );
 
-     CREATE TABLE IF NOT EXISTS produkty (
+    CREATE TABLE IF NOT EXISTS konta (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        login TEXT UNIQUE NOT NULL,
+        haslo TEXT NOT NULL,
+        email TEXT NOT NULL,
+        adres_dostawy TEXT NOT NULL
+    );
+
+    CREATE TABLE IF NOT EXISTS produkty (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         kategoria TEXT NOT NULL CHECK(kategoria IN ('gitara', 'perkusja')),
         marka TEXT NOT NULL,
@@ -30,24 +38,21 @@ def initialize_database():
         producent TEXT NOT NULL,
         cena REAL NOT NULL CHECK(cena >= 0),
         ilosc INTEGER NOT NULL CHECK(ilosc >= 0),
-        -- Dodatkowe pola dla gitar
         rodzaj TEXT CHECK(rodzaj IN ('elektryczna', 'akustyczna', 'basowa')),
         ilosc_strun INTEGER CHECK(ilosc_strun BETWEEN 4 AND 12),
         rodzaj_przetwornikow TEXT CHECK(rodzaj_przetwornikow IN ('single-coil', 'humbucker', 'P90')),
-        -- Dodatkowe pola dla perkusji
         ilosc_bebnow INTEGER CHECK(ilosc_bebnow >= 1),
         rodzaj_naciagow TEXT CHECK(rodzaj_naciagow IN ('powlekane', 'niewpowlekane'))
     );
 
     CREATE TABLE IF NOT EXISTS zamowienia (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    klient_id INTEGER NOT NULL,
-    data_zamowienia TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    suma REAL NOT NULL,
-    dostawa TEXT NOT NULL CHECK(dostawa IN ('kurier', 'odbiór osobisty')), -- Dodana kolumna dostawa
-    FOREIGN KEY(klient_id) REFERENCES klienci(id)
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        klient_id INTEGER NOT NULL,
+        data_zamowienia TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        suma REAL NOT NULL,
+        dostawa TEXT NOT NULL CHECK(dostawa IN ('kurier', 'odbiór osobisty')),
+        FOREIGN KEY(klient_id) REFERENCES klienci(id)
     );
-
 
     CREATE TABLE IF NOT EXISTS zamowione_produkty (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -59,7 +64,6 @@ def initialize_database():
         FOREIGN KEY(produkt_id) REFERENCES produkty(id)
     );
 
-
     CREATE TABLE IF NOT EXISTS pozycje_zamowienia (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         zamowienie_id INTEGER,
@@ -68,29 +72,32 @@ def initialize_database():
         FOREIGN KEY(zamowienie_id) REFERENCES zamowienia(id),
         FOREIGN KEY(produkt_id) REFERENCES produkty(id)
     );
-    
+
     CREATE TABLE IF NOT EXISTS faktury (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    zamowienie_id INTEGER NOT NULL,
-    klient_id INTEGER NOT NULL,
-    data_faktury TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    suma_netto REAL NOT NULL,
-    vat REAL NOT NULL,
-    suma_brutto REAL NOT NULL,
-    FOREIGN KEY(zamowienie_id) REFERENCES zamowienia(id),
-    FOREIGN KEY(klient_id) REFERENCES klienci(id)
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        zamowienie_id INTEGER NOT NULL,
+        klient_id INTEGER NOT NULL,
+        data_faktury TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        suma_netto REAL NOT NULL,
+        vat REAL NOT NULL,
+        suma_brutto REAL NOT NULL,
+        FOREIGN KEY(zamowienie_id) REFERENCES zamowienia(id),
+        FOREIGN KEY(klient_id) REFERENCES klienci(id)
     );
-    
+
     CREATE TABLE IF NOT EXISTS koszyk (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    klient_id INTEGER NOT NULL,
-    produkt_id INTEGER NOT NULL,
-    ilosc INTEGER NOT NULL CHECK(ilosc >= 1),
-    cena REAL NOT NULL,
-    FOREIGN KEY(klient_id) REFERENCES klienci(id),
-    FOREIGN KEY(produkt_id) REFERENCES produkty(id)
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        klient_id INTEGER NOT NULL,
+        produkt_id INTEGER NOT NULL,
+        ilosc INTEGER NOT NULL CHECK(ilosc >= 1),
+        cena REAL NOT NULL,
+        FOREIGN KEY(klient_id) REFERENCES klienci(id),
+        FOREIGN KEY(produkt_id) REFERENCES produkty(id)
     );
     ''')
+
     conn.commit()
     conn.close()
 
+if __name__ == "__main__":
+    initialize_database()
