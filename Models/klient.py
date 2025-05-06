@@ -1,26 +1,14 @@
-import sqlite3
 from database import get_db_connection
+import re
 
 class Klient:
-    def __init__(self, imie, nazwisko, email, adres, id=None):
-        self.id = id
+    def __init__(self, imie, nazwisko, email, adres):
         self.imie = imie
         self.nazwisko = nazwisko
         self.email = email
         self.adres = adres
 
-    @staticmethod
-    def is_valid_email(email):
-        """Sprawdza, czy e-mail zawiera '@' oraz '.' """
-        return "@" in email and "." in email
-
-    @staticmethod
-    def is_valid_name(name):
-        """Sprawdza, czy imię i nazwisko składają się tylko z liter"""
-        return name.isalpha() and len(name) > 1
-
     def dodaj_do_bazy(self):
-        """Dodaje klienta do bazy danych"""
         if not Klient.is_valid_email(self.email):
             raise ValueError(f"Nieprawidłowy format e-maila: {self.email}")
         if not Klient.is_valid_name(self.imie):
@@ -30,43 +18,48 @@ class Klient:
         if len(self.adres.strip()) < 5:
             raise ValueError(f"Nieprawidłowy adres zamieszkania: {self.adres}")
 
-        try:
-            conn = get_db_connection()
-            cursor = conn.cursor()
-            cursor.execute("INSERT INTO klienci (imie, nazwisko, email, adres) VALUES (?, ?, ?, ?)",
-                           (self.imie, self.nazwisko, self.email, self.adres))
-            conn.commit()
-            print(f"Klient {self.imie} {self.nazwisko} został dodany do bazy.")
-        except sqlite3.IntegrityError:
-            print(f"Błąd: Klient z e-mailem {self.email} już istnieje w bazie.")
-        except sqlite3.Error as e:
-            print(f"Błąd bazy danych: {e}")
-        finally:
-            conn.close()
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        cursor.execute(
+            "INSERT INTO klienci (imie, nazwisko, email, adres, konto_id) VALUES (?, ?, ?, ?, NULL)",
+            (self.imie, self.nazwisko, self.email, self.adres)
+        )
+        conn.commit()
+        conn.close()
+        print(f"Klient {self.imie} {self.nazwisko} został dodany do bazy.")
 
     @staticmethod
-    def usun_klienta(klient_id):
-        """Usuwa klienta z bazy danych na podstawie ID"""
-        if not isinstance(klient_id, int) or klient_id <= 0:
-            raise ValueError(f"Nieprawidłowe ID klienta: {klient_id}")
+    def dodaj_z_konto_id(konto_id, imie, nazwisko, email, adres):
+        if not Klient.is_valid_email(email):
+            raise ValueError(f"Nieprawidłowy format e-maila: {email}")
+        if not Klient.is_valid_name(imie):
+            raise ValueError(f"Nieprawidłowe imię: {imie}")
+        if not Klient.is_valid_name(nazwisko):
+            raise ValueError(f"Nieprawidłowe nazwisko: {nazwisko}")
+        if len(adres.strip()) < 5:
+            raise ValueError(f"Nieprawidłowy adres zamieszkania: {adres}")
 
-        try:
-            conn = get_db_connection()
-            cursor = conn.cursor()
+        conn = get_db_connection()
+        cursor = conn.cursor()
 
-            # Sprawdzamy, czy klient istnieje
-            cursor.execute("SELECT * FROM klienci WHERE id=?", (klient_id,))
-            klient = cursor.fetchone()
-
-            if klient is None:
-                print(f"Błąd: Klient o ID {klient_id} nie istnieje w bazie.")
-                return
-
-            # Usuwamy klienta
-            cursor.execute("DELETE FROM klienci WHERE id=?", (klient_id,))
-            conn.commit()
-            print(f"Klient o ID {klient_id} został usunięty z bazy.")
-        except sqlite3.Error as e:
-            print(f"Błąd bazy danych: {e}")
-        finally:
+        # WALIDACJA: czy email już istnieje?
+        cursor.execute("SELECT id FROM klienci WHERE email = ?", (email,))
+        if cursor.fetchone():
             conn.close()
+            raise ValueError("Klient z tym adresem e-mail już istnieje.")
+
+        cursor.execute(
+            "INSERT INTO klienci (konto_id, imie, nazwisko, email, adres) VALUES (?, ?, ?, ?, ?)",
+            (konto_id, imie, nazwisko, email, adres)
+        )
+        conn.commit()
+        conn.close()
+        print(f"Klient {imie} {nazwisko} został dodany do bazy z kontem ID {konto_id}.")
+
+    @staticmethod
+    def is_valid_email(email):
+        return re.match(r"[^@]+@[^@]+\.[^@]+", email)
+
+    @staticmethod
+    def is_valid_name(name):
+        return len(name.strip()) >= 2 and name.isalpha()

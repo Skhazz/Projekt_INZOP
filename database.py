@@ -16,11 +16,14 @@ def initialize_database():
     cursor.executescript('''
     CREATE TABLE IF NOT EXISTS klienci (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
+        konto_id INTEGER NOT NULL,
         imie TEXT NOT NULL,
         nazwisko TEXT NOT NULL,
         email TEXT UNIQUE NOT NULL,
-        adres TEXT NOT NULL
+        adres TEXT NOT NULL,
+        FOREIGN KEY(konto_id) REFERENCES konta(id)
     );
+
 
     CREATE TABLE IF NOT EXISTS konta (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
