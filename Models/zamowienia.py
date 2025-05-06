@@ -141,3 +141,37 @@ class Zamowienia:
         conn.close()
 
         print(f"Zamówienie ID {zamowienie_id} zostało anulowane, a ilości produktów przywrócone.")
+
+    @staticmethod
+    def generuj_raport_sprzedazy(data_od=None, data_do=None):
+        conn = get_db_connection()
+        cursor = conn.cursor()
+
+        query = """
+            SELECT z.id, z.data_zamowienia, z.suma, k.imie || ' ' || k.nazwisko AS klient
+            FROM zamowienia z
+            JOIN klienci k ON z.klient_id = k.id
+            WHERE 1=1
+        """
+        params = []
+
+        if data_od:
+            query += " AND z.data_zamowienia >= ?"
+            params.append(data_od)
+        if data_do:
+            query += " AND z.data_zamowienia <= ?"
+            params.append(data_do)
+
+        cursor.execute(query, params)
+        wyniki = cursor.fetchall()
+
+        if not wyniki:
+            print("Brak zamówień w podanym zakresie.")
+        else:
+            print("\n--- Raport sprzedaży ---")
+            for z in wyniki:
+                print(
+                    f"Zamówienie #{z['id']} | Data: {z['data_zamowienia']} | Suma: {z['suma']} zł | Klient: {z['klient']}")
+            print(f"\nŁącznie: {sum(z['suma'] for z in wyniki)} zł")
+
+        conn.close()
