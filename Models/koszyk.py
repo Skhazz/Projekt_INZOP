@@ -7,57 +7,55 @@ class Koszyk:
         conn = get_db_connection()
         cursor = conn.cursor()
 
-        # Pobierz cenę produktu
-        cursor.execute("SELECT cena FROM produkty WHERE id = ?", (produkt_id,))
+        # Sprawdź, czy produkt istnieje i ma wystarczającą ilość
+        cursor.execute("SELECT ilosc, cena FROM produkty WHERE id = ?", (produkt_id,))
         produkt = cursor.fetchone()
+
         if not produkt:
             print("Nie znaleziono produktu o podanym ID.")
             conn.close()
             return
 
-        cena = produkt["cena"] * ilosc
+        if produkt["ilosc"] < ilosc:
+            print("Brak wystarczającej ilości produktu na stanie.")
+            conn.close()
+            return
 
-        # Dodaj do koszyka
-        cursor.execute("""
-            INSERT INTO koszyk (klient_id, produkt_id, ilosc, cena)
-            VALUES (?, ?, ?, ?)
-        """, (klient_id, produkt_id, ilosc, cena))
+        cena = produkt["cena"]
+
+        # Sprawdź, czy produkt jest już w koszyku
+        cursor.execute("SELECT id, ilosc FROM koszyk WHERE klient_id = ? AND produkt_id = ?", (klient_id, produkt_id))
+        istnieje = cursor.fetchone()
+
+        if istnieje:
+            nowa_ilosc = istnieje["ilosc"] + ilosc
+            cursor.execute("UPDATE koszyk SET ilosc = ?, cena = ? WHERE id = ?", (nowa_ilosc, cena, istnieje["id"]))
+        else:
+            cursor.execute("INSERT INTO koszyk (klient_id, produkt_id, ilosc, cena) VALUES (?, ?, ?, ?)",
+                           (klient_id, produkt_id, ilosc, cena))
 
         conn.commit()
         conn.close()
         print("Produkt dodany do koszyka.")
 
     @staticmethod
-    def usun_z_koszyka(klient_id, produkt_id):
-        conn = get_db_connection()
-        cursor = conn.cursor()
-        cursor.execute("DELETE FROM koszyk WHERE klient_id = ? AND produkt_id = ?", (klient_id, produkt_id))
-        conn.commit()
-        conn.close()
-        print("Produkt usunięty z koszyka.")
-
-    @staticmethod
     def wyswietl_koszyk(klient_id):
-        """Wyświetla koszyk klienta"""
         conn = get_db_connection()
         cursor = conn.cursor()
 
         cursor.execute('''
-        SELECT k.produkt_id, (p.marka || ' ' || p.model) AS nazwa, k.ilosc, k.cena
-        FROM koszyk k
-        JOIN produkty p ON k.produkt_id = p.id
-        WHERE k.klient_id = ?
+            SELECT k.ilosc, k.cena, p.marka, p.model
+            FROM koszyk k
+            JOIN produkty p ON k.produkt_id = p.id
+            WHERE k.klient_id = ?
         ''', (klient_id,))
         produkty = cursor.fetchall()
 
-        if produkty:
-            print(f"\n Koszyk klienta ID {klient_id}:")
-            suma_koszyka = 0
-            for produkt in produkty:
-                suma_koszyka += produkt['cena']
-                print(f"    ID: {produkt['produkt_id']} | {produkt['nazwa']} - {produkt['ilosc']} szt., Łączna cena: {produkt['cena']} zł")
-            print(f"\n Suma do zapłaty: {suma_koszyka} zł")
+        if not produkty:
+            print("Koszyk jest pusty.")
         else:
-            print(f" Koszyk klienta ID {klient_id} jest pusty.")
+            print("\n--- Zawartość koszyka ---")
+            for p in produkty:
+                print(f"{p['marka']} {p['model']} | Ilość: {p['ilosc']} | Cena za sztukę: {p['cena']} zł")
 
         conn.close()

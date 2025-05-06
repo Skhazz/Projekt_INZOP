@@ -42,7 +42,7 @@ class Klient:
         conn = get_db_connection()
         cursor = conn.cursor()
 
-        # WALIDACJA: czy email już istnieje?
+
         cursor.execute("SELECT id FROM klienci WHERE email = ?", (email,))
         if cursor.fetchone():
             conn.close()

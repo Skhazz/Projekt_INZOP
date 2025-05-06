@@ -49,7 +49,7 @@ def initialize_database():
 
     CREATE TABLE IF NOT EXISTS zamowienia (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
-        klient_id INTEGER NOT NULL,
+        klient_id INTEGER,
         data_zamowienia TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         suma REAL NOT NULL,
         dostawa TEXT NOT NULL CHECK(dostawa IN ('kurier', 'odbiór osobisty')),
@@ -78,7 +78,7 @@ def initialize_database():
     CREATE TABLE IF NOT EXISTS faktury (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         zamowienie_id INTEGER NOT NULL,
-        klient_id INTEGER NOT NULL,
+        klient_id INTEGER,
         data_faktury TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         suma_netto REAL NOT NULL,
         vat REAL NOT NULL,
@@ -98,7 +98,7 @@ def initialize_database():
     );
     ''')
 
-    # Dodaj konto administratora jeśli nie istnieje
+
     cursor.execute("SELECT id FROM konta WHERE login = 'admin'")
     if cursor.fetchone() is None:
         cursor.execute('''

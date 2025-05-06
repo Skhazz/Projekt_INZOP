@@ -22,7 +22,7 @@ def anuluj_zamowienie(konto_id):
 
         zamowienie_id = int(zamowienie_id)
 
-        # Sprawdź, czy zamówienie należy do klienta
+
         cursor.execute("SELECT id FROM zamowienia WHERE id = ? AND klient_id = ?", (zamowienie_id, klient_id))
         if cursor.fetchone():
             Zamowienia.anuluj_zamowienie(zamowienie_id)

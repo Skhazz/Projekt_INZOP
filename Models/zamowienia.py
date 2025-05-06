@@ -24,7 +24,7 @@ class Zamowienia:
             conn.close()
             return
 
-        # Sprawdź dostępność wszystkich produktów
+
         for item in koszyk:
             cursor.execute("SELECT ilosc FROM produkty WHERE id = ?", (item["produkt_id"],))
             produkt = cursor.fetchone()
@@ -53,7 +53,6 @@ class Zamowienia:
                 VALUES (?, ?, ?, ?)
             ''', (zamowienie_id, item["produkt_id"], item["ilosc"], item["cena"]))
 
-            # Zmniejsz ilość w magazynie
             cursor.execute(
                 "UPDATE produkty SET ilosc = ilosc - ? WHERE id = ?",
                 (item["ilosc"], item["produkt_id"])
@@ -68,12 +67,24 @@ class Zamowienia:
                 VALUES (?, ?, ?, ?, ?)
             ''', (zamowienie_id, klient_id, round(suma_netto, 2), vat, round(suma_brutto, 2)))
 
+            # Pobierz dane produktów do faktury
+            cursor.execute('''
+                SELECT p.marka, p.model, zp.ilosc, zp.cena
+                FROM zamowione_produkty zp
+                JOIN produkty p ON zp.produkt_id = p.id
+                WHERE zp.zamowienie_id = ?
+            ''', (zamowienie_id,))
+            produkty = cursor.fetchall()
+            produkty_list = [dict(p) for p in produkty]
+
             Faktura.generuj_plik(
                 zamowienie_id=zamowienie_id,
                 klient_id=klient_id,
                 suma_netto=round(suma_netto, 2),
                 vat=vat,
-                suma_brutto=round(suma_brutto, 2)
+                suma_brutto=round(suma_brutto, 2),
+                produkty=produkty_list,
+                dostawa=dostawa
             )
 
             print("Faktura została wygenerowana.")
@@ -110,68 +121,46 @@ class Zamowienia:
         conn.close()
 
     @staticmethod
-    def anuluj_zamowienie(zamowienie_id):
+    def anuluj_zamowienie(konto_id):
+        try:
+            zamowienie_id = int(input("Podaj ID zamówienia do anulowania: "))
+        except ValueError:
+            print("Nieprawidłowy numer zamówienia.")
+            return
+
         conn = get_db_connection()
         cursor = conn.cursor()
 
-        # Pobierz produkty z zamówienia
-        cursor.execute("""
-            SELECT produkt_id, ilosc
-            FROM zamowione_produkty
-            WHERE zamowienie_id = ?
-        """, (zamowienie_id,))
+
+        cursor.execute("SELECT id FROM klienci WHERE konto_id = ?", (konto_id,))
+        klient = cursor.fetchone()
+        if not klient:
+            print("Nie znaleziono klienta.")
+            conn.close()
+            return
+
+        klient_id = klient["id"]
+
+
+        cursor.execute("SELECT id FROM zamowienia WHERE id = ? AND klient_id = ?", (zamowienie_id, klient_id))
+        zamowienie = cursor.fetchone()
+        if not zamowienie:
+            print("Nie znaleziono zamówienia powiązanego z tym kontem.")
+            conn.close()
+            return
+
+
+        cursor.execute("SELECT produkt_id, ilosc FROM zamowione_produkty WHERE zamowienie_id = ?", (zamowienie_id,))
         produkty = cursor.fetchall()
+        for produkt in produkty:
+            cursor.execute("UPDATE produkty SET ilosc = ilosc + ? WHERE id = ?",
+                           (produkt["ilosc"], produkt["produkt_id"]))
 
-        # Przywróć ilości do magazynu
-        for item in produkty:
-            produkt_id = item["produkt_id"]
-            ilosc = item["ilosc"]
-            cursor.execute("""
-                UPDATE produkty
-                SET ilosc = ilosc + ?
-                WHERE id = ?
-            """, (ilosc, produkt_id))
 
-        # Usuń powiązane rekordy
-        cursor.execute("DELETE FROM zamowione_produkty WHERE zamowienie_id = ?", (zamowienie_id,))
         cursor.execute("DELETE FROM faktury WHERE zamowienie_id = ?", (zamowienie_id,))
+        cursor.execute("DELETE FROM zamowione_produkty WHERE zamowienie_id = ?", (zamowienie_id,))
         cursor.execute("DELETE FROM zamowienia WHERE id = ?", (zamowienie_id,))
 
         conn.commit()
         conn.close()
-
-        print(f"Zamówienie ID {zamowienie_id} zostało anulowane, a ilości produktów przywrócone.")
-
-    @staticmethod
-    def generuj_raport_sprzedazy(data_od=None, data_do=None):
-        conn = get_db_connection()
-        cursor = conn.cursor()
-
-        query = """
-            SELECT z.id, z.data_zamowienia, z.suma, k.imie || ' ' || k.nazwisko AS klient
-            FROM zamowienia z
-            JOIN klienci k ON z.klient_id = k.id
-            WHERE 1=1
-        """
-        params = []
-
-        if data_od:
-            query += " AND z.data_zamowienia >= ?"
-            params.append(data_od)
-        if data_do:
-            query += " AND z.data_zamowienia <= ?"
-            params.append(data_do)
-
-        cursor.execute(query, params)
-        wyniki = cursor.fetchall()
-
-        if not wyniki:
-            print("Brak zamówień w podanym zakresie.")
-        else:
-            print("\n--- Raport sprzedaży ---")
-            for z in wyniki:
-                print(
-                    f"Zamówienie #{z['id']} | Data: {z['data_zamowienia']} | Suma: {z['suma']} zł | Klient: {z['klient']}")
-            print(f"\nŁącznie: {sum(z['suma'] for z in wyniki)} zł")
-
-        conn.close()
+        print("Zamówienie zostało anulowane.")

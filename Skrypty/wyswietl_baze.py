@@ -8,7 +8,7 @@ def wyswietl_baze():
 
         print("\n*** ZAWARTOŚĆ BAZY DANYCH ***\n")
 
-        # Wyświetlanie klientów
+
         print(" Klienci:")
         cursor.execute("SELECT * FROM klienci")
         klienci = cursor.fetchall()
@@ -18,7 +18,7 @@ def wyswietl_baze():
         else:
             print("Brak klientów w bazie.")
 
-        # Wyświetlanie produktów
+
         print("\n Produkty w sklepie:")
         cursor.execute("SELECT * FROM produkty")
         produkty = cursor.fetchall()
@@ -34,7 +34,7 @@ def wyswietl_baze():
         else:
             print("Brak produktów w bazie.")
 
-        # Wyświetlanie zamówień
+
         print("\n Zamówienia:")
         cursor.execute("SELECT * FROM zamowienia")
         zamowienia = cursor.fetchall()
@@ -44,7 +44,7 @@ def wyswietl_baze():
         else:
             print("Brak zamówień w bazie.")
 
-        # Wyświetlanie pozycji zamówienia
+
         print("\n Pozycje zamówień:")
         cursor.execute("SELECT * FROM pozycje_zamowienia")
         pozycje = cursor.fetchall()

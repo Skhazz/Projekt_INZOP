@@ -34,7 +34,7 @@ class Produkt:
         conn = get_db_connection()
         cursor = conn.cursor()
 
-        # Sprawdzenie, czy produkt istnieje w bazie
+
         cursor.execute("SELECT * FROM produkty WHERE id = ?", (produkt_id,))
         produkt = cursor.fetchone()
 
@@ -43,7 +43,7 @@ class Produkt:
             conn.close()
             return
 
-        # Sprawdzamy, czy produkt znajduje się w koszyku któregokolwiek klienta
+
         cursor.execute("SELECT * FROM koszyk WHERE produkt_id = ?", (produkt_id,))
         koszyk_pozycje = cursor.fetchall()
 
@@ -52,7 +52,7 @@ class Produkt:
             conn.close()
             return
 
-        # Usunięcie produktu
+
         cursor.execute("DELETE FROM produkty WHERE id = ?", (produkt_id,))
         conn.commit()
         conn.close()
@@ -64,7 +64,7 @@ class Produkt:
         conn = get_db_connection()
         cursor = conn.cursor()
 
-        # Pobranie danych produktu do edycji
+
         cursor.execute("SELECT * FROM produkty WHERE id = ?", (produkt_id,))
         produkt = cursor.fetchone()
 
@@ -75,7 +75,7 @@ class Produkt:
 
         print(f"\n Edycja produktu ID {produkt_id}: {produkt['marka']} {produkt['model']}")
 
-        # Pobieramy nowe wartości (jeśli użytkownik naciska Enter, zostaje stara wartość)
+
         nowa_marka = input(f"Nowa marka [{produkt['marka']}]: ").strip() or produkt['marka']
         nowy_model = input(f"Nowy model [{produkt['model']}]: ").strip() or produkt['model']
         nowy_producent = input(f"Nowy producent [{produkt['producent']}]: ").strip() or produkt['producent']
@@ -100,7 +100,7 @@ class Produkt:
                 break
             print(" Ilość musi być liczbą!")
 
-        # Jeśli produkt to gitara
+
         if produkt["kategoria"] == "gitara":
             nowy_rodzaj = input(f"Nowy rodzaj ({produkt['rodzaj']}) [elektryczna/akustyczna/basowa]: ").strip() or \
                           produkt['rodzaj']
@@ -109,14 +109,14 @@ class Produkt:
                 f"Nowy rodzaj przetworników [{produkt['rodzaj_przetwornikow']}] [single-coil/humbucker/P90]: ").strip() or \
                                produkt['rodzaj_przetwornikow']
 
-            # Aktualizacja w bazie
+
             cursor.execute('''
                    UPDATE produkty SET marka=?, model=?, producent=?, cena=?, ilosc=?, rodzaj=?, ilosc_strun=?, rodzaj_przetwornikow=?
                    WHERE id=?
                ''', (nowa_marka, nowy_model, nowy_producent, nowa_cena, nowa_ilosc, nowy_rodzaj, nowa_ilosc_strun,
                      nowy_przetwornik, produkt_id))
 
-        # Jeśli produkt to perkusja
+
         elif produkt["kategoria"] == "perkusja":
             nowa_ilosc_bebnow = input(f"Nowa ilość bębnów [{produkt['ilosc_bebnow']}]: ").strip() or produkt[
                 'ilosc_bebnow']
@@ -124,7 +124,7 @@ class Produkt:
                 f"Nowy rodzaj naciągów [{produkt['rodzaj_naciagow']}] [powlekane/niewpowlekane]: ").strip() or produkt[
                               'rodzaj_naciagow']
 
-            # Aktualizacja w bazie
+
             cursor.execute('''
                    UPDATE produkty SET marka=?, model=?, producent=?, cena=?, ilosc=?, ilosc_bebnow=?, rodzaj_naciagow=?
                    WHERE id=?

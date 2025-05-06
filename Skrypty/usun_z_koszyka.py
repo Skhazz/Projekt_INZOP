@@ -4,7 +4,7 @@ from database import get_db_connection
 def usun_z_koszyka(konto_id):
     """Usuwa produkt z koszyka klienta po ID konta (przekonwertowanego na klienta)"""
     try:
-        # Pobierz klient_id na podstawie konto_id
+
         conn = get_db_connection()
         cursor = conn.cursor()
         cursor.execute("SELECT id FROM klienci WHERE konto_id = ?", (konto_id,))

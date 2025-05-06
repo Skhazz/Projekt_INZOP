@@ -12,6 +12,8 @@ from Skrypty.dodaj_produkt import dodaj_produkt
 from Skrypty.modyfikuj_produkt import modyfikuj_produkt
 from Skrypty.usun_produkt import usun_produkt
 from database import get_db_connection, initialize_database
+from Models.zamowienia import Zamowienia
+
 
 initialize_database()
 
@@ -25,25 +27,58 @@ def panel_klienta(konto_id):
             "4": ("Wyświetl dostępne produkty", wyswietl_produkty),
             "5": ("Złóż zamowienie", lambda: zloz_zamowienie(konto_id)),
             "6": ("Wyświetl złożone zamówienia", lambda: wyswietl_zamowienia_klienta(konto_id)),
-            "7": ("Anuluj zamówienie", lambda: anuluj_zamowienie(konto_id)),
-            "8": ("Wyloguj się", None),
-            "9": ("Zmień hasło", lambda: zmien_haslo_klienta(konto_id))
+            "7": ("Anuluj zamówienie", lambda: Zamowienia.anuluj_zamowienie(konto_id)),
+            "8": ("Wyloguj się", lambda: print("Wylogowano.")),
+            "9": ("Zmień hasło", lambda: zmien_haslo_klienta(konto_id)),
+            "10": ("Usuń konto", lambda: usun_konto(konto_id))
         }
 
         for klucz, (opis, _) in opcje.items():
             print(f"{klucz}. {opis}")
 
         wybor = input("\nWybierz opcję: ").strip()
-
-        if wybor == "8":
-            print("Wylogowano.")
-            break
-        elif wybor in opcje:
-            _, funkcja = opcje[wybor]
-            if funkcja:
-                funkcja()
+        if wybor in opcje:
+            if wybor == "8":
+                break
+            opcje[wybor][1]()
         else:
-            print("Nieprawidłowy wybór. Spróbuj ponownie.")
+            print("Nieprawidłowa opcja.")
+
+
+
+def usun_konto(konto_id):
+    potwierdzenie = input("Czy na pewno chcesz usunąć konto? Tej operacji nie można cofnąć (TAK/NIE): ").strip().lower()
+    if potwierdzenie != "tak":
+        print("Anulowano usuwanie konta.")
+        return
+
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+
+    cursor.execute("SELECT id FROM klienci WHERE konto_id = ?", (konto_id,))
+    row = cursor.fetchone()
+    if not row:
+        print("Nie znaleziono klienta powiązanego z tym kontem.")
+        conn.close()
+        return
+
+    klient_id = row["id"]
+
+
+    cursor.execute("UPDATE zamowienia SET klient_id = NULL WHERE klient_id = ?", (klient_id,))
+    cursor.execute("UPDATE faktury SET klient_id = NULL WHERE klient_id = ?", (klient_id,))
+
+
+    cursor.execute("DELETE FROM koszyk WHERE klient_id = ?", (klient_id,))
+    cursor.execute("DELETE FROM klienci WHERE id = ?", (klient_id,))
+    cursor.execute("DELETE FROM konta WHERE id = ?", (konto_id,))
+
+    conn.commit()
+    conn.close()
+
+    print("Konto zostało usunięte.")
+    exit()
 
 def zmien_haslo_admina():
     login = "admin"

@@ -8,8 +8,8 @@ def dodaj_klienta():
     adres = input("Podaj adres zamieszkania: ")
 
     try:
-        klient = Klient(imie, nazwisko, email, adres)  # Tworzymy obiekt Klient
-        klient.dodaj_do_bazy()  # Wywołujemy metodę dodającą do bazy
+        klient = Klient(imie, nazwisko, email, adres)
+        klient.dodaj_do_bazy()
     except ValueError as e:
         print(f"Błąd: {e}")
     except Exception as e:

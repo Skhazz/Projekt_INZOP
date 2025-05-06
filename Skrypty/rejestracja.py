@@ -14,7 +14,7 @@ def rejestracja():
         konto = Konto(login, haslo, email, adres_dostawy)
         konto.utworz_konto()
 
-        # po rejestracji konta, pobierz jego ID
+
         conn = get_db_connection()
         cursor = conn.cursor()
         cursor.execute("SELECT id FROM konta WHERE login = ?", (login,))
@@ -28,7 +28,7 @@ def rejestracja():
             imie = input("Imię: ").strip()
             nazwisko = input("Nazwisko: ").strip()
 
-            # użyj e-maila i adresu z konta
+
             email_os = email
             adres = adres_dostawy
 

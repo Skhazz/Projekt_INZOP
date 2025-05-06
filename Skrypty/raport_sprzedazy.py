@@ -8,7 +8,7 @@ def raport_sprzedazy():
     data_od = input("Od (YYYY-MM-DD): ").strip()
     data_do = input("Do (YYYY-MM-DD): ").strip()
 
-    # Sprawdzamy, czy wprowadzono poprawne daty
+
     if data_od and len(data_od) != 10:
         print(" Niepoprawny format daty! Powinien być YYYY-MM-DD")
         return
