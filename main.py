@@ -11,10 +11,9 @@ from Skrypty.nuke_database import nuke_database
 from Skrypty.dodaj_produkt import dodaj_produkt
 from Skrypty.modyfikuj_produkt import modyfikuj_produkt
 from Skrypty.usun_produkt import usun_produkt
-from database import get_db_connection
-from database import initialize_database
-initialize_database()
+from database import get_db_connection, initialize_database
 
+initialize_database()
 
 def panel_klienta(konto_id):
     while True:
@@ -27,7 +26,8 @@ def panel_klienta(konto_id):
             "5": ("Złóż zamowienie", lambda: zloz_zamowienie(konto_id)),
             "6": ("Wyświetl złożone zamówienia", lambda: wyswietl_zamowienia_klienta(konto_id)),
             "7": ("Anuluj zamówienie", lambda: anuluj_zamowienie(konto_id)),
-            "8": ("Wyloguj się", None)
+            "8": ("Wyloguj się", None),
+            "9": ("Zmień hasło", lambda: zmien_haslo_klienta(konto_id))
         }
 
         for klucz, (opis, _) in opcje.items():
@@ -71,6 +71,32 @@ def zmien_haslo_admina():
     conn.close()
 
     print("Hasło administratora zostało zmienione.")
+
+def zmien_haslo_klienta(konto_id):
+    aktualne = input("Podaj obecne hasło: ").strip()
+    nowe = input("Podaj nowe hasło: ").strip()
+    potwierdz = input("Potwierdź nowe hasło: ").strip()
+
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("SELECT haslo FROM konta WHERE id = ?", (konto_id,))
+    row = cursor.fetchone()
+
+    if not row or row["haslo"] != aktualne:
+        print("Błędne obecne hasło.")
+        conn.close()
+        return
+
+    if nowe != potwierdz:
+        print("Hasła nie są zgodne.")
+        conn.close()
+        return
+
+    cursor.execute("UPDATE konta SET haslo = ? WHERE id = ?", (nowe, konto_id))
+    conn.commit()
+    conn.close()
+
+    print("Hasło zostało zmienione.")
 
 def panel_admina():
     while True:
