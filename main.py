@@ -12,6 +12,9 @@ from Skrypty.dodaj_produkt import dodaj_produkt
 from Skrypty.modyfikuj_produkt import modyfikuj_produkt
 from Skrypty.usun_produkt import usun_produkt
 from database import get_db_connection
+from database import initialize_database
+initialize_database()
+
 
 def panel_klienta(konto_id):
     while True:
@@ -42,6 +45,33 @@ def panel_klienta(konto_id):
         else:
             print("Nieprawidłowy wybór. Spróbuj ponownie.")
 
+def zmien_haslo_admina():
+    login = "admin"
+    aktualne = input("Podaj obecne hasło: ").strip()
+    nowe = input("Podaj nowe hasło: ").strip()
+    potwierdz = input("Potwierdź nowe hasło: ").strip()
+
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("SELECT haslo FROM konta WHERE login = ?", (login,))
+    row = cursor.fetchone()
+
+    if not row or row["haslo"] != aktualne:
+        print("Błędne obecne hasło.")
+        conn.close()
+        return
+
+    if nowe != potwierdz:
+        print("Hasła nie są zgodne.")
+        conn.close()
+        return
+
+    cursor.execute("UPDATE konta SET haslo = ? WHERE login = ?", (nowe, login))
+    conn.commit()
+    conn.close()
+
+    print("Hasło administratora zostało zmienione.")
+
 def panel_admina():
     while True:
         print("\n--- Panel administratora ---")
@@ -52,7 +82,8 @@ def panel_admina():
             "4": ("Usuń produkt", usun_produkt),
             "5": ("Wygeneruj raport sprzedaży", raport_sprzedazy),
             "6": ("Usuń całą bazę (NIEODWRACALNE)", nuke_database),
-            "7": ("Powrót do menu głównego", None)
+            "7": ("Powrót do menu głównego", None),
+            "8": ("Zmień hasło administratora", zmien_haslo_admina)
         }
 
         for klucz, (opis, _) in opcje.items():
@@ -87,11 +118,28 @@ def logowanie_klienta():
     else:
         print("Błędny login lub hasło.")
 
+def logowanie_admina():
+    print("\n--- Logowanie administratora ---")
+    login = input("Login: ").strip()
+    haslo = input("Hasło: ").strip()
+
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("SELECT id FROM konta WHERE login = ? AND haslo = ?", (login, haslo))
+    row = cursor.fetchone()
+    conn.close()
+
+    if row and login == "admin":
+        print("Zalogowano jako administrator.")
+        panel_admina()
+    else:
+        print("Błędne dane administratora. Dostęp zabroniony.")
+
 def menu_glowne():
     while True:
         print("\n--- MENU GŁÓWNE ---")
         opcje = {
-            "1": ("Panel administratora", panel_admina),
+            "1": ("Panel administratora", logowanie_admina),
             "2": ("Panel klienta", logowanie_klienta),
             "3": ("Rejestracja nowego konta", rejestracja),
             "4": ("Wyjście", None)

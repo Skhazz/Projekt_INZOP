@@ -24,7 +24,6 @@ def initialize_database():
         FOREIGN KEY(konto_id) REFERENCES konta(id)
     );
 
-
     CREATE TABLE IF NOT EXISTS konta (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         login TEXT UNIQUE NOT NULL,
@@ -98,6 +97,14 @@ def initialize_database():
         FOREIGN KEY(produkt_id) REFERENCES produkty(id)
     );
     ''')
+
+    # Dodaj konto administratora jeśli nie istnieje
+    cursor.execute("SELECT id FROM konta WHERE login = 'admin'")
+    if cursor.fetchone() is None:
+        cursor.execute('''
+            INSERT INTO konta (login, haslo, email, adres_dostawy)
+            VALUES ('admin', 'admin', 'admin@example.com', 'Panel administratora')
+        ''')
 
     conn.commit()
     conn.close()
