@@ -4,7 +4,7 @@ import pytest
 
 # Umożliwia importowanie modułów z głównego katalogu projektu
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
-
+#wersja
 
 
 
