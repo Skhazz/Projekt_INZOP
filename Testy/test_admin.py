@@ -3,7 +3,9 @@ import sys
 import pytest
 
 # Umożliwia importowanie modułów z głównego katalogu projektu
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..")))
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+
+
 
 
 from database import get_db_connection, initialize_database
