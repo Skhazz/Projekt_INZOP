@@ -164,3 +164,40 @@ class Zamowienia:
         conn.commit()
         conn.close()
         print("Zamówienie zostało anulowane.")
+
+    @staticmethod
+    def generuj_raport_sprzedazy(data_od=None, data_do=None):
+        conn = get_db_connection()
+        cursor = conn.cursor()
+
+        query = '''
+                SELECT z.id, z.data_zamowienia, z.suma, z.dostawa, COUNT(zp.id) as liczba_produktow
+                FROM zamowienia z
+                LEFT JOIN zamowione_produkty zp ON z.id = zp.zamowienie_id
+            '''
+        params = []
+
+        if data_od and data_do:
+            query += " WHERE DATE(z.data_zamowienia) BETWEEN ? AND ?"
+            params = [data_od, data_do]
+        elif data_od:
+            query += " WHERE DATE(z.data_zamowienia) >= ?"
+            params = [data_od]
+        elif data_do:
+            query += " WHERE DATE(z.data_zamowienia) <= ?"
+            params = [data_do]
+
+        query += " GROUP BY z.id ORDER BY z.data_zamowienia DESC"
+
+        cursor.execute(query, params)
+        zamowienia = cursor.fetchall()
+
+        print("\n=== RAPORT SPRZEDAŻY ===")
+        if zamowienia:
+            for z in zamowienia:
+                print(
+                    f"Zamówienie ID: {z['id']} | Data: {z['data_zamowienia']} | Suma: {z['suma']} zł | Dostawa: {z['dostawa']} | Liczba produktów: {z['liczba_produktow']}")
+        else:
+            print("Brak danych do wyświetlenia w wybranym zakresie.")
+
+        conn.close()
